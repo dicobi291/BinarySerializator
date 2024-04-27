@@ -11,9 +11,10 @@ int main()
 	std::vector<std::byte> buff;
 
 	int i = 156;
-	serialize<DataType::INT>(buff, i);
-	serialize<DataType::FLOAT>(buff, 234.86f);
-	serialize<DataType::INT>(buff, 2356);
+	serialize(buff, i);
+	serialize(buff, 234.86f);
+	serialize(buff, 568324.86);
+	serialize(buff, 2356u);
 
 	auto dataType {DataType::UNKNOWN};
 	for (int i = 0; i < buff.size();) {
@@ -27,12 +28,28 @@ int main()
 				std::cout << "Deserialized int val: " << val << std::endl;
 				break;
 			}
+			case DataType::UINT:
+			{
+				unsigned int val {0};
+				deserialize(buff.data() + i + 1, val);
+				i += sizeof(val) + 1;
+				std::cout << "Deserialized unsigned int val: " << val << std::endl;
+				break;
+			}
 			case DataType::FLOAT:
 			{
 				float val {0};
 				deserialize(buff.data() + i + 1, val);
 				i += sizeof(val) + 1;
 				std::cout << "Deserialized float val: " << val << std::endl;
+				break;
+			}
+			case DataType::DOUBLE:
+			{
+				double val {0};
+				deserialize(buff.data() + i + 1, val);
+				i += sizeof(val) + 1;
+				std::cout << "Deserialized double val: " << val << std::endl;
 				break;
 			}
 			default:

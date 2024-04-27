@@ -4,17 +4,82 @@
 namespace binary_serializator
 {
 
+/*
+* Types supported for serializtaion.
+*/
 enum class DataType : uint8_t {
 	INT,
+	UINT,
 	FLOAT,
+	DOUBLE,
 
 	UNKNOWN
 };
 
-template<DataType DATA_TYPE, typename T, typename = std::enable_if_t<std::is_fundamental_v<std::decay_t<T> > > >
+/*
+* Helpers templates to detect DataType enum value from serialized type.
+*/
+namespace helpers {
+	/*
+	* Compile time if-else.
+	* if T == int then DT == DataType::INT
+	* if T == float then DT == DataType::FLOAT
+	* etc...
+	* if T is not one of supported type then DT == DataType::UNKNOWN
+	*/
+	template<typename T>
+	struct DataTypeFromType
+	{
+		static constexpr DataType DT = DataType::UNKNOWN;
+	};
+
+	template<>
+	struct DataTypeFromType<int>
+	{
+		static constexpr DataType DT = DataType::INT;
+	};
+
+	template<>
+	struct DataTypeFromType<unsigned int>
+	{
+		static constexpr DataType DT = DataType::UINT;
+	};
+
+	template<>
+	struct DataTypeFromType<float>
+	{
+		static constexpr DataType DT = DataType::FLOAT;
+	};
+
+	template<>
+	struct DataTypeFromType<double>
+	{
+		static constexpr DataType DT = DataType::DOUBLE;
+	};
+
+	/*
+	* Just for simplify using like in stl templates.
+	*/
+	template<typename T>
+	inline constexpr DataType DataTypeFromType_v = DataTypeFromType<T>::DT;
+}
+
+/*
+* Serialize data and put it into the std::vector buffer of byte.
+*/
+template<
+		typename T, //serialized type
+		DataType DATA_TYPE = helpers::DataTypeFromType_v<std::decay_t<T> >, //DataType enum value detected from T
+		typename = std::enable_if_t< //only for arithmetic types bool, char, int, float, double etc.
+			std::is_arithmetic_v<
+				std::decay_t<T> //removed from T const, volatile qualifires and all references
+			>
+		>
+	>
 void serialize(std::vector<std::byte> &buf, T&& data)
 {
-	static_assert(DATA_TYPE != DataType::UNKNOWN, "Error: serialzie unknown type.");
+	//Compile time error while trying to serialize unsupported type.
+	static_assert(DATA_TYPE != DataType::UNKNOWN, "Error: serialize unknown type. Check serialize(...) function call and DataType enum.");
 
 	auto dataSize = sizeof(data);
 	buf.resize(buf.size() + dataSize + 1);
@@ -22,10 +87,13 @@ void serialize(std::vector<std::byte> &buf, T&& data)
 	std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte*>(&data), dataSize);
 }
 
-template<typename T, typename = std::enable_if_t<std::is_fundamental_v<T> > >
-void deserialize(const std::byte *bufStart, T &data)
+/*
+* Deserialize data from bufStart place and put it into the result variable.
+*/
+template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> > > //only for arithmetic types bool, char, int, float, double etc.
+void deserialize(const std::byte *bufStart, T &result)
 {
-	std::memcpy(reinterpret_cast<std::byte *>(&data), bufStart, sizeof(data));
+	std::memcpy(reinterpret_cast<std::byte *>(&result), bufStart, sizeof(result));
 }
 
 } //binary_serializator
