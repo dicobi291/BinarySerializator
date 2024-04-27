@@ -11,16 +11,14 @@ enum class DataType : uint8_t {
 	UNKNOWN
 };
 
-template<typename T, typename = std::enable_if_t<std::is_fundamental_v<T> > >
-void serialize(std::vector<std::byte> &buf, const DataType dataType, const T& data)
+template<DataType DATA_TYPE, typename T, typename = std::enable_if_t<std::is_fundamental_v<std::decay_t<T> > > >
+void serialize(std::vector<std::byte> &buf, T&& data)
 {
-	if (dataType == DataType::UNKNOWN) {
-		throw std::runtime_error("Error: serialzie unknown type.");
-	}
+	static_assert(DATA_TYPE != DataType::UNKNOWN, "Error: serialzie unknown type.");
 
 	auto dataSize = sizeof(data);
 	buf.resize(buf.size() + dataSize + 1);
-	std::memcpy(buf.data() + (buf.size() - dataSize - 1), reinterpret_cast<const std::byte*>(&dataType), sizeof(dataType));
+	buf[buf.size() - dataSize - 1] = static_cast<std::byte>(DATA_TYPE);
 	std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte*>(&data), dataSize);
 }
 

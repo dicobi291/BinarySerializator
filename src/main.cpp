@@ -10,9 +10,10 @@ int main()
 
 	std::vector<std::byte> buff;
 
-	serialize(buff, DataType::INT, 156);
-	serialize(buff, DataType::FLOAT, 234.86f);
-	serialize(buff, DataType::INT, 2356);
+	int i = 156;
+	serialize<DataType::INT>(buff, i);
+	serialize<DataType::FLOAT>(buff, 234.86f);
+	serialize<DataType::INT>(buff, 2356);
 
 	auto dataType {DataType::UNKNOWN};
 	for (int i = 0; i < buff.size();) {
