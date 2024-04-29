@@ -13,6 +13,8 @@ enum class DataType : uint8_t {
 	FLOAT,
 	DOUBLE,
 
+	USER_DATA,
+
 	UNKNOWN
 };
 
@@ -91,9 +93,25 @@ void serialize(std::vector<std::byte> &buf, T&& data)
 * Deserialize data from bufStart place and put it into the result variable.
 */
 template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> > > //only for arithmetic types bool, char, int, float, double etc.
-void deserialize(const std::byte *bufStart, T &result)
+std::size_t deserialize(const std::vector<std::byte> buf, std::size_t offset, T &result)
 {
-	std::memcpy(reinterpret_cast<std::byte *>(&result), bufStart, sizeof(result));
+	std::memcpy(reinterpret_cast<std::byte *>(&result), buf.data() + offset, sizeof(result));
+	return offset + sizeof(result);
 }
+
+/*
+* Base struct for user defined structures
+* which we want serialize/deserialize.
+*/
+struct ISerialize
+{
+//Forbidden dynamic polymorphism.
+protected:
+	~ISerialize() = default;
+
+public:
+	virtual void serialize(std::vector<std::byte> &buf) = 0;
+	virtual std::size_t deserialize(const std::vector<std::byte> &buf, std::size_t offset) = 0;
+};
 
 } //binary_serializator
