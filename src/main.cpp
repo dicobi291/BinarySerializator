@@ -36,7 +36,6 @@ struct UserData : public binary_serializator::ISerialize
 	}
 };
 
-
 int main()
 {
 	using namespace binary_serializator;
