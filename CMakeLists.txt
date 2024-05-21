@@ -18,6 +18,6 @@ include_directories(
 set(
 	SOURCES 
 	src/main.cpp
-	src/serializator.cpp)
+	src/core.cpp)
 
 add_executable(binary_serializator ${SOURCES})

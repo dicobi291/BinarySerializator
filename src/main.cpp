@@ -1,8 +1,9 @@
 #include <iostream>
 
 #include "../include/serializator.h"
+#include "../include/core.h"
 
-struct UserData : public binary_serializator::ISerialize
+struct UserData : public binary_serializator::ISerializable
 {
 	int m_iData;
 	double m_dData;
@@ -17,22 +18,24 @@ struct UserData : public binary_serializator::ISerialize
 		m_dData(d),
 		m_fData(f) {}
 
-	void serialize(std::vector<std::byte> &buf) override
+	std::vector<std::byte> serialize() override
 	{
-		buf.resize(buf.size() + 1);
-		buf[buf.size() - 1] = static_cast<std::byte>(binary_serializator::DataType::USER_DATA);
-		binary_serializator::serialize(buf, m_iData);
-		binary_serializator::serialize(buf, m_dData);
-		binary_serializator::serialize(buf, m_fData);
+		std::vector<std::byte> buff;
+
+		ISerializable::serializeData(buff, m_iData);
+		ISerializable::serializeData(buff, m_dData);
+		ISerializable::serializeData(buff, m_fData);
+
+		return buff;
 	}
 
-	std::size_t deserialize(const std::vector<std::byte> &buf, std::size_t offset) override
+	void deserialize(const std::vector<std::byte> &buff) override
 	{
-		offset = binary_serializator::deserialize(buf, offset + 1, m_iData);
-		offset = binary_serializator::deserialize(buf, offset + 1, m_dData);
-		offset = binary_serializator::deserialize(buf, offset + 1, m_fData);
-
-		return offset;
+		std::size_t offset = 0;
+		
+		offset = ISerializable::deserializeData(buff, offset, m_iData);
+		offset = ISerializable::deserializeData(buff, offset, m_dData);
+		offset = ISerializable::deserializeData(buff, offset, m_fData);
 	}
 };
 
@@ -44,58 +47,40 @@ int main()
 
 	std::vector<std::byte> buff;
 
+	int iVal = 156;
+	binary_serializator::core::serialize(buff, iVal);
+	binary_serializator::core::serialize(buff, 234.86f);
+	binary_serializator::core::serialize(buff, 568324.86);
+	binary_serializator::core::serialize(buff, 2356u);
+	
 	UserData userData {5, 875.54, 936.4f};
 
-	int iVal = 156;
-	serialize(buff, iVal);
-	serialize(buff, 234.86f);
-	serialize(buff, 568324.86);
-	userData.serialize(buff);
-	serialize(buff, 2356u);
+	auto userBuff = userData.serialize();
 
-	auto dataType {DataType::UNKNOWN};
-	for (std::size_t offset = 0; offset < buff.size();) {
-		dataType = static_cast<DataType>(buff[offset]);
-		switch (dataType) {
-			case DataType::INT:
-			{
-				int val {0};
-				offset = deserialize(buff, offset + 1, val);
-				std::cout << "Deserialized int val: " << val << std::endl;
-				break;
-			}
-			case DataType::UINT:
-			{
-				unsigned int val {0};
-				offset = deserialize(buff, offset + 1, val);
-				std::cout << "Deserialized unsigned int val: " << val << std::endl;
-				break;
-			}
-			case DataType::FLOAT:
-			{
-				float val {0};
-				offset = deserialize(buff, offset + 1, val);
-				std::cout << "Deserialized float val: " << val << std::endl;
-				break;
-			}
-			case DataType::DOUBLE:
-			{
-				double val {0};
-				offset = deserialize(buff, offset + 1, val);
-				std::cout << "Deserialized double val: " << std::fixed << val << std::endl;
-				break;
-			}
-			case DataType::USER_DATA:
-			{
-				UserData _userData;
-				offset = _userData.deserialize(buff, offset + 1);
-				std::cout << "Deserialized UserData: " << _userData.m_iData << ", " << _userData.m_dData << ", " << _userData.m_fData << std::endl;
-				break;
-			}
-			default:
-				break;
-		}
-	}
+	int iDeserializeVal = 0;
+	float fDeserializeVal = 0.0f;
+	double dDeserializeVal = 0.0;
+	unsigned int uDeserializeVal = 0;
+	UserData deserializedUserData;
+	
+	std::size_t offset = 0;
+
+	offset = binary_serializator::core::deserialize(buff, offset, iDeserializeVal);
+	offset = binary_serializator::core::deserialize(buff, offset, fDeserializeVal);
+	offset = binary_serializator::core::deserialize(buff, offset, dDeserializeVal);
+	offset = binary_serializator::core::deserialize(buff, offset, uDeserializeVal);
+
+	deserializedUserData.deserialize(userBuff);
+
+	std::cout << "Deserialized int val: " << iDeserializeVal << std::endl;
+	std::cout << "Deserialized float val: " << fDeserializeVal << std::endl;
+	std::cout << "Deserialized double val: " << std::fixed << dDeserializeVal << std::endl;
+	std::cout << "Deserialized unsigned int val: " << uDeserializeVal << std::endl;
+
+	std::cout << "Deserialized userData: " << std::endl;
+	std::cout << "* iVal: " << deserializedUserData.m_iData << std::endl;
+	std::cout << "* dVal: " << deserializedUserData.m_dData << std::endl;
+	std::cout << "* fVal: " << deserializedUserData.m_fData << std::endl;
 
 	return 0;
 }
