@@ -8,15 +8,18 @@ struct UserData : public binary_serializator::ISerializable
 	int m_iData;
 	double m_dData;
 	float m_fData;
+	std::string m_strData;
 
 	UserData(
 		const int i = 0,
 		const double d = 0.0,
-		const float f = 0.0f
+		const float f = 0.0f,
+		const std::string &str = ""
 	) :
 		m_iData(i),
 		m_dData(d),
-		m_fData(f) {}
+		m_fData(f),
+		m_strData(str) {}
 
 	std::vector<std::byte> serialize() override
 	{
@@ -25,6 +28,7 @@ struct UserData : public binary_serializator::ISerializable
 		ISerializable::serializeData(buff, m_iData);
 		ISerializable::serializeData(buff, m_dData);
 		ISerializable::serializeData(buff, m_fData);
+		ISerializable::serializeData(buff, m_strData);
 
 		return buff;
 	}
@@ -36,6 +40,7 @@ struct UserData : public binary_serializator::ISerializable
 		offset = ISerializable::deserializeData(buff, offset, m_iData);
 		offset = ISerializable::deserializeData(buff, offset, m_dData);
 		offset = ISerializable::deserializeData(buff, offset, m_fData);
+		offset = ISerializable::deserializeData(buff, offset, m_strData);
 	}
 };
 
@@ -54,7 +59,7 @@ int main()
 	binary_serializator::core::serialize(buff, 568324.86);
 	binary_serializator::core::serialize(buff, 2356u);
 	
-	UserData userData {5, 875.54, 936.4f};
+	UserData userData {5, 875.54, 936.4f, "string_data"};
 
 	auto userBuff = userData.serialize();
 
@@ -85,6 +90,7 @@ int main()
 	std::cout << "* iVal: " << deserializedUserData.m_iData << std::endl;
 	std::cout << "* dVal: " << deserializedUserData.m_dData << std::endl;
 	std::cout << "* fVal: " << deserializedUserData.m_fData << std::endl;
+	std::cout << "* strVal: " << deserializedUserData.m_strData << std::endl;
 
 	return 0;
 }

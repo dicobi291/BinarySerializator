@@ -38,6 +38,7 @@ namespace helpers {
 	Spec(unsigned int, UINT)
 	Spec(float, FLOAT)
 	Spec(double, DOUBLE)
+	Spec(std::string, STRING)
 #undef Spec
 
 	/*

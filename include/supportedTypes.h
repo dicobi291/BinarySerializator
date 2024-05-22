@@ -13,6 +13,8 @@ enum class SupportedType : uint8_t {
 	FLOAT,
 	DOUBLE,
 
+	STRING,
+
 	UNKNOWN
 };
 
