@@ -33,6 +33,7 @@ namespace helpers {
 		static constexpr SupportedType DT = SupportedType::EnumType; \
 	};
 
+	Spec(bool, BOOL)
 	Spec(int, INT)
 	Spec(unsigned int, UINT)
 	Spec(float, FLOAT)

@@ -48,6 +48,7 @@ int main()
 	std::vector<std::byte> buff;
 
 	int iVal = 156;
+	binary_serializator::core::serialize(buff, false);
 	binary_serializator::core::serialize(buff, iVal);
 	binary_serializator::core::serialize(buff, 234.86f);
 	binary_serializator::core::serialize(buff, 568324.86);
@@ -57,6 +58,7 @@ int main()
 
 	auto userBuff = userData.serialize();
 
+	bool bDeserializeVal = false;
 	int iDeserializeVal = 0;
 	float fDeserializeVal = 0.0f;
 	double dDeserializeVal = 0.0;
@@ -65,6 +67,7 @@ int main()
 	
 	std::size_t offset = 0;
 
+	offset = binary_serializator::core::deserialize(buff, offset, bDeserializeVal);
 	offset = binary_serializator::core::deserialize(buff, offset, iDeserializeVal);
 	offset = binary_serializator::core::deserialize(buff, offset, fDeserializeVal);
 	offset = binary_serializator::core::deserialize(buff, offset, dDeserializeVal);
@@ -72,6 +75,7 @@ int main()
 
 	deserializedUserData.deserialize(userBuff);
 
+	std::cout << "Deserialized bool val: " << bDeserializeVal << std::endl;
 	std::cout << "Deserialized int val: " << iDeserializeVal << std::endl;
 	std::cout << "Deserialized float val: " << fDeserializeVal << std::endl;
 	std::cout << "Deserialized double val: " << std::fixed << dDeserializeVal << std::endl;
