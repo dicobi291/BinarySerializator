@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include "../include/serializator.h"
 #include "../include/core.h"
@@ -52,12 +53,15 @@ int main()
 
 	std::vector<std::byte> buff;
 
+	std::vector<int> iVector = {1, 2, 3};
+
 	int iVal = 156;
 	binary_serializator::core::serialize(buff, false);
 	binary_serializator::core::serialize(buff, iVal);
 	binary_serializator::core::serialize(buff, 234.86f);
 	binary_serializator::core::serialize(buff, 568324.86);
 	binary_serializator::core::serialize(buff, 2356u);
+	binary_serializator::core::serialize(buff, iVector);
 	
 	UserData userData {5, 875.54, 936.4f, "string_data"};
 
@@ -68,6 +72,7 @@ int main()
 	float fDeserializeVal = 0.0f;
 	double dDeserializeVal = 0.0;
 	unsigned int uDeserializeVal = 0;
+	std::vector<int> iDeserializedVector;
 	UserData deserializedUserData;
 	
 	std::size_t offset = 0;
@@ -77,6 +82,7 @@ int main()
 	offset = binary_serializator::core::deserialize(buff, offset, fDeserializeVal);
 	offset = binary_serializator::core::deserialize(buff, offset, dDeserializeVal);
 	offset = binary_serializator::core::deserialize(buff, offset, uDeserializeVal);
+	offset = binary_serializator::core::deserialize(buff, offset, iDeserializedVector);
 
 	deserializedUserData.deserialize(userBuff);
 
@@ -85,6 +91,7 @@ int main()
 	std::cout << "Deserialized float val: " << fDeserializeVal << std::endl;
 	std::cout << "Deserialized double val: " << std::fixed << dDeserializeVal << std::endl;
 	std::cout << "Deserialized unsigned int val: " << uDeserializeVal << std::endl;
+	std::cout << "Deserialized int vector: "; std::for_each(iDeserializedVector.cbegin(), iDeserializedVector.cend(), [&iDeserializedVector](const auto &val) { std::cout << val << (iDeserializedVector.back() == val) ? ", " : "" ; }); std::cout << std::endl;
 
 	std::cout << "Deserialized userData: " << std::endl;
 	std::cout << "* iVal: " << deserializedUserData.m_iData << std::endl;
