@@ -45,7 +45,7 @@ void serialize(std::vector<std::byte> &buf, T &&data)
 		buf.resize(buf.size() + sizeof(dataSize) + dataSize);
 		std::memcpy(buf.data() + (buf.size() - sizeof(dataSize) - dataSize), reinterpret_cast<const std::byte *>(&dataSize), sizeof(dataSize));
 		std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte *>(data.data()), dataSize);
-	} {
+	} else {
 		buf.resize(buf.size() + dataSize);
 		std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte *>(&data), dataSize);
 	}
@@ -104,7 +104,7 @@ std::size_t deserialize(const std::vector<std::byte> &buf, const std::size_t &of
 		result.resize(dataSize);
 		std::memcpy(reinterpret_cast<std::byte *>(result.data()), buf.data() + offset + sizeof(dataSize), dataSize);
 		return offset + sizeof(dataSize) + result.size();
-	} {
+	} else {
 		std::memcpy(reinterpret_cast<std::byte *>(&result), buf.data() + offset, sizeof(result));
 	}
 	return offset + sizeof(result);

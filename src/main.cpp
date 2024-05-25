@@ -53,7 +53,7 @@ int main()
 
 	std::vector<std::byte> buff;
 
-	std::vector<int> iVector = {1, 2, 3};
+	std::vector<int> iVector = {50, 464, 30574, 10'000'000};
 
 	int iVal = 156;
 	binary_serializator::core::serialize(buff, false);
@@ -91,7 +91,7 @@ int main()
 	std::cout << "Deserialized float val: " << fDeserializeVal << std::endl;
 	std::cout << "Deserialized double val: " << std::fixed << dDeserializeVal << std::endl;
 	std::cout << "Deserialized unsigned int val: " << uDeserializeVal << std::endl;
-	std::cout << "Deserialized int vector: "; std::for_each(iDeserializedVector.cbegin(), iDeserializedVector.cend(), [&iDeserializedVector](const auto &val) { std::cout << val << (iDeserializedVector.back() == val) ? ", " : "" ; }); std::cout << std::endl;
+	std::cout << "Deserialized int vector: "; std::for_each(iDeserializedVector.cbegin(), iDeserializedVector.cend(), [&iDeserializedVector](const auto &val) { std::cout << val << ((iDeserializedVector.back() == val) ? "" : ", ") ; }); std::cout << std::endl;
 
 	std::cout << "Deserialized userData: " << std::endl;
 	std::cout << "* iVal: " << deserializedUserData.m_iData << std::endl;
