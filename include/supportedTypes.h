@@ -14,6 +14,7 @@ enum class SupportedType : uint8_t {
 	DOUBLE,
 
 	STRING,
+	VECTOR,
 
 	UNKNOWN
 };

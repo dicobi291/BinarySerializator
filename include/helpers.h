@@ -22,6 +22,12 @@ namespace helpers {
 		static constexpr SupportedType DT = SupportedType::UNKNOWN;
 	};
 
+	template<typename T>
+	struct SupportedTypeFromType<std::vector<T> >
+	{
+		static constexpr SupportedType DT = SupportedType::VECTOR;
+	};
+
 	/*
 	* I don't like macros, but this just only because I'm lazy
 	* to print full template spec again when add new type support.
