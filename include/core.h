@@ -1,144 +1,122 @@
 #pragma once
-
+#include <concepts>
 #include <vector>
 
-#include "supportedTypes.h"
-#include "helpers.h"
+#include "details.h"
 
 namespace binary_serializator
 {
+    namespace core
+    {
+        using namespace details;
 
-namespace core
-{
+        //Constatns for boolean type serialization
+        static constexpr unsigned char TRUE = 'T';
+        static constexpr unsigned char FALSE = 'F';
 
-constexpr char TRUE = 'T';
-constexpr char FALSE = 'F';
+        //Supported types concepts
+        template<typename T>
+        concept NumberType = (std::integral<T> || std::floating_point<T>) && !std::same_as<T, bool>;
 
-/*
-* Serialize data and put it into the std::vector buffer of byte.
-*/
-template<
-		typename T, //serialized type
-		SupportedType SUPPORTED_TYPE = helpers::SupportedTypeFromType_v<std::decay_t<T> >, //DataType enum value detected from T
-		typename = std::enable_if_t< //only for arithmetic types bool, char, int, float, double etc.
-			std::is_arithmetic_v<
-				std::decay_t<T> //remove from T const, volatile qualifires and all references
-			>
-			||
-			std::is_same_v<
-				std::string,
-				std::decay_t<T> //remove from T const, volatile qualifires and all references
-			>
-		>
-	>
-void serialize(std::vector<std::byte> &buf, T &&data)
-{
-	//Compile time error while trying to serialize unsupported type.
-	static_assert(SUPPORTED_TYPE != SupportedType::UNKNOWN, "Error: serialize unknown type. Check serialize(...) function call and DataType enum.");
+        template<typename T>
+        concept BooleanType = std::same_as<T, bool>;
 
-	auto dataSize = sizeof(data);
-	if constexpr (SUPPORTED_TYPE == SupportedType::BOOL) {
-		buf.resize(buf.size() + dataSize);
-		std::memcpy(buf.data() + (buf.size() - dataSize), (data == true ? reinterpret_cast<const std::byte *>(&TRUE) : reinterpret_cast<const std::byte *>(&FALSE)), dataSize);
-	} else if constexpr (SUPPORTED_TYPE == SupportedType::STRING) {
-		dataSize = data.size();
-		buf.resize(buf.size() + sizeof(dataSize) + dataSize);
-		std::memcpy(buf.data() + (buf.size() - sizeof(dataSize) - dataSize), reinterpret_cast<const std::byte *>(&dataSize), sizeof(dataSize));
-		std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte *>(data.data()), dataSize);
-	} else {
-		buf.resize(buf.size() + dataSize);
-		std::memcpy(buf.data() + (buf.size() - dataSize), reinterpret_cast<const std::byte *>(&data), dataSize);
-	}
-}
+        template<typename T>
+        concept StringType = std::same_as<T, std::string>;
 
-template<
-		typename T,
-		SupportedType SUPPORTED_TYPE = helpers::SupportedTypeFromType_v<std::decay_t<T> >, //DataType enum value detected from T
-		typename = std::enable_if_t< //only for arithmetic types bool, char, int, float, double etc.
-			std::is_arithmetic_v<
-				std::decay_t<T> //remove from T const, volatile qualifires and all references
-			>
-			||
-			std::is_same_v<
-				std::string,
-				std::decay_t<T> //remove from T const, volatile qualifires and all references
-			>
-		>
-	>
-void serialize(std::vector<std::byte> &buf, const std::vector<T> &data)
-{
-	//Compile time error while trying to serialize unsupported type.
-	static_assert(SUPPORTED_TYPE != SupportedType::UNKNOWN, "Error: serialize vector of unknown type. Check serialize(..., std::vector<...>) function call and DataType enum.");
+        template<typename T>
+        concept AllowedType = NumberType<T> || BooleanType<T> || StringType<T>;
 
-	auto dataSize = data.size();
-	if constexpr (SUPPORTED_TYPE == SupportedType::BOOL) {
-		dataSize *= 8;
-	}
-	buf.resize(buf.size() + sizeof(dataSize));
-	std::memcpy(buf.data() + (buf.size() - sizeof(dataSize)), reinterpret_cast<const std::byte *>(&dataSize), sizeof(dataSize));
-	for (const auto &el : data) {
-		serialize(buf, el);
-	}
-}
+        //serialization
+        template<typename T> requires NumberType<std::decay_t<T> >
+        constexpr inline void serialize(std::vector<Byte> &buff, T &&data)
+        {
+            std::cout << "serialize " << data << std::endl;
+            auto dataSize = sizeof(data);
+            buff.resize(buff.size() + dataSize);
+            std::memcpy(buff.data() + (buff.size() - dataSize), reinterpret_cast<const Byte *>(&data), dataSize);
+        }
 
-template<
-	typename T,
-	typename = std::enable_if_t<
-		std::is_arithmetic_v<
-			std::decay_t<T>
-		>
-		||
-		std::is_same_v<
-			std::string,
-			std::decay_t<T> //remove from T const, volatile qualifires and all references
-		>
-	>
-> //only for arithmetic types bool, char, int, float, double etc.
-std::size_t deserialize(const std::vector<std::byte> &buf, const std::size_t &offset, T &result)
-{
-	if constexpr (std::is_same_v<std::decay_t<T>, bool>) {
-		result = (reinterpret_cast<const char &>(buf[offset]) == TRUE);
-	} else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
-		decltype(result.size()) dataSize = 0;
-		std::memcpy(reinterpret_cast<std::byte *>(&dataSize), buf.data() + offset, sizeof(dataSize));
-		result.resize(dataSize);
-		std::memcpy(reinterpret_cast<std::byte *>(result.data()), buf.data() + offset + sizeof(dataSize), dataSize);
-		return offset + sizeof(dataSize) + result.size();
-	} else {
-		std::memcpy(reinterpret_cast<std::byte *>(&result), buf.data() + offset, sizeof(result));
-	}
-	return offset + sizeof(result);
-}
+        template<typename T> requires BooleanType<std::decay_t<T> >
+        constexpr inline void serialize(std::vector<Byte> &buff, T &&data)
+        {
+            std::cout << "serialize bool " << data << std::endl;
+            auto dataSize = sizeof(data);
+            buff.resize(buff.size() + dataSize);
+            std::memcpy(buff.data() + (buff.size() - dataSize), (data == true ? reinterpret_cast<const Byte *>(&TRUE) : reinterpret_cast<const Byte *>(&FALSE)), dataSize);
+        }
 
-template<
-	typename T,
-	typename = std::enable_if_t<
-		std::is_arithmetic_v<
-			std::decay_t<T>
-		>
-		||
-		std::is_same_v<
-			std::string,
-			std::decay_t<T> //remove from T const, volatile qualifires and all references
-		>
-	>
-> //only for arithmetic types bool, char, int, float, double etc.
-std::size_t deserialize(const std::vector<std::byte> &buf, const std::size_t &offset, std::vector<T> &result)
-{
-	decltype(result.size()) dataSize = 0;
-	std::memcpy(reinterpret_cast<std::byte *>(&dataSize), buf.data() + offset, sizeof(dataSize));
-	if constexpr (std::is_same_v<std::decay_t<T>, bool>) {
-		dataSize /= 8;
-	}
-	result.resize(dataSize);
-	std::size_t _offset = offset + sizeof(dataSize);
-	for (int i = 0; i < dataSize; i++) {
-		_offset = deserialize(buf, _offset, result[i]);
-	}
+        template<typename T> requires StringType<std::decay_t<T> >
+        constexpr inline void serialize(std::vector<Byte> &buff, T &&data)
+        {
+            std::cout << "serialize string " << data << std::endl;
+            auto dataSize = data.size();
+            buff.resize(buff.size() + sizeof(dataSize) + dataSize);
+            std::memcpy(buff.data() + (buff.size() - sizeof(dataSize) - dataSize), reinterpret_cast<const Byte *>(&dataSize), sizeof(dataSize));
+            std::memcpy(buff.data() + (buff.size() - dataSize), reinterpret_cast<const Byte *>(data.data()), dataSize);
+        }
 
-	return _offset;
-}
+        template<typename T> requires AllowedType<std::decay_t<T> >
+        constexpr inline void serialize(std::vector<Byte> &buff, const std::vector<T> &data)
+        {
+            std::cout << "serialize vector " << data.size() << std::endl;
+	        auto dataSize = data.size();
+	        if constexpr (std::is_same_v<std::decay_t<T>, bool>) {
+	            dataSize *= 8;
+	        }
+	        buff.resize(buff.size() + sizeof(dataSize));
+	        std::memcpy(buff.data() + (buff.size() - sizeof(dataSize)), reinterpret_cast<const Byte *>(&dataSize), sizeof(dataSize));
+	        for (const auto &el : data) {
+	            serialize(buff, el);
+	        }
+        }
 
-} //core
+        //deserialization
+        template<typename T> requires NumberType<std::decay_t<T> >
+        constexpr inline std::size_t deserialize(const std::vector<Byte> &buff, const std::size_t &offset, T &result)
+        {
+            std::cout << "deserialize arithmetic type" << std::endl;
+		    std::memcpy(reinterpret_cast<Byte *>(&result), buff.data() + offset, sizeof(result));
+	        return offset + sizeof(result);
+        }
+
+        template<typename T> requires BooleanType<std::decay_t<T> >
+        constexpr inline std::size_t deserialize(const std::vector<Byte> &buff, const std::size_t &offset, T &result)
+        {
+            std::cout << "deserialize bool " << std::endl;
+		    result = (reinterpret_cast<const char &>(buff[offset]) == TRUE);
+	        return offset + sizeof(result);
+        }
+
+        template<typename T> requires StringType<std::decay_t<T> >
+        constexpr inline std::size_t deserialize(const std::vector<Byte> &buff, const std::size_t &offset, T &result)
+        {
+            std::cout << "deserialize string " << std::endl;
+		    decltype(result.size()) dataSize = 0;
+		    std::memcpy(reinterpret_cast<Byte *>(&dataSize), buff.data() + offset, sizeof(dataSize));
+		    result.resize(dataSize);
+		    std::memcpy(reinterpret_cast<Byte *>(result.data()), buff.data() + offset + sizeof(dataSize), dataSize);
+		    return offset + sizeof(dataSize) + result.size();
+        }
+
+        template<typename T> requires AllowedType<std::decay_t<T> >
+        constexpr inline std::size_t deserialize(const std::vector<Byte> &buff, const std::size_t &offset, std::vector<T> &result)
+        {
+            std::cout << "deserialize vector " << std::endl;
+	        decltype(result.size()) dataSize = 0;
+	        std::memcpy(reinterpret_cast<Byte *>(&dataSize), buff.data() + offset, sizeof(dataSize));
+	        if constexpr (std::is_same_v<std::decay_t<T>, bool>) {
+	            dataSize /= 8;
+	        }
+	        result.resize(dataSize);
+	        std::size_t _offset = offset + sizeof(dataSize);
+	        for (int i = 0; i < dataSize; i++) {
+	            _offset = deserialize(buff, _offset, result[i]);
+	        }
+
+	        return _offset;
+        }
+
+    } //core
 
 } //binary_serializator
